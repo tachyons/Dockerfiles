@@ -1,0 +1,35 @@
+FROM sephora/ubuntu:18.04
+
+LABEL name="sephora/ruby:2.6.2-node-12" \
+      version="1.0" \
+      maintainers="devops@sephoradigital.com" \
+      sg.sephora.tags="base-image,ruby"
+
+ENV RUBY_MAJOR 2.6
+ENV RUBY_VERSION 2.6.2
+ENV RUBY_DOWNLOAD_SHA256 a0405d2bf2c2d2f332033b70dff354d224a864ab0edd462b7a413420453b49ab
+ENV RUBYGEMS_VERSION 3.0.3
+ENV BUNDLER_VERSION 2.0.1
+
+RUN apt-get update && \
+    apt-get install gnupg2 curl --assume-yes && \
+    echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
+    curl -sL https://deb.nodesource.com/setup_12.x | bash - && \
+    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install xorg xfonts-75dpi apt-transport-https git git-core wget curl gcc make zlib1g-dev build-essential libssl-dev libreadline-dev libyaml-dev libxml2-dev libcurl4-openssl-dev libxslt1-dev libffi-dev libpq-dev libmagickwand-dev imagemagick mcrypt libmcrypt-dev software-properties-common yarn tzdata nodejs --assume-yes  --no-install-recommends && \
+    wget -O /usr/src/ruby.tar.gz "http://ftp.ruby-lang.org/pub/ruby/${RUBY_MAJOR}/ruby-${RUBY_VERSION}.tar.gz" && \
+    tar xvzf /usr/src/ruby.tar.gz -C /usr/src && \
+    cd /usr/src/ruby-${RUBY_VERSION} && \
+    ./configure --prefix=/usr/local --enable-shared --disable-install-doc --with-opt-dir=/usr/local/lib && \
+    make && make install && \
+    gem install rubygems-update && \
+    gem update --system && \
+    gem install bundler --version ${BUNDLER_VERSION} --force && \
+    wget https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.bionic_amd64.deb && \
+    dpkg -i wkhtmltox_0.12.5-1.bionic_amd64.deb && \
+    cd / && \
+    rm -fr /usr/src/ruby-* /usr/src/rubygems-* /usr/src/ruby.tar.gz /usr/src/rubygems.tgz /var/lib/apt/lists/*;
+
+CMD ['irb']
+
